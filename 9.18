@@ -1,0 +1,191 @@
+#--------------race Example------------------
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int shared_variable = 0;
+
+    double start_time = omp_get_wtime(); // Start timing
+
+    #pragma omp parallel num_threads(8)
+    {
+        for (int i = 0; i < 100000; i++) {
+            shared_variable++; 
+        }
+    }
+
+    double end_time = omp_get_wtime(); // End timing
+
+    printf("Final value of shared_variable is %d.\n", shared_variable);
+    printf("Runtime: %f seconds\n", end_time - start_time); // Calculate and print runtime
+
+    return 0;
+}
+--------------------------
+Final value of shared_variable is 244683.
+Runtime: 0.012551 seconds
+==================================================
+
+
+#include <stdio.h>
+#include <omp.h>
+
+void doBigJob(int id) {
+    long long dummy, workload = (id + 1) * 100000000LL; 
+    for (long long i = 0; i < workload; i++)
+        dummy = i * i; 
+}
+
+int main() {
+    #pragma omp parallel num_threads(4)
+    {
+        int id = omp_get_thread_num();
+
+        doBigJob(id);
+
+        printf("First job done by %d\n", id);
+
+        doBigJob(id);
+
+        printf("Second job done by %d\n", id);
+    }
+
+    return 0;
+}
+---------------------------------------------
+First job done by 0
+First job done by 1
+Second job done by 0
+First job done by 2
+Second job done by 1
+First job done by 3
+Second job done by 2
+Second job done by 3
+============================================
+
+
+#include <stdio.h>
+#include <omp.h>
+
+void doBigJob(int id) {
+    long long dummy, workload = (id + 1) * 100000000LL;
+    for (long long i = 0; i < workload; i++)
+        dummy = i * i;
+}
+
+int main() {
+#pragma omp parallel num_threads(4)
+    {
+        int id = omp_get_thread_num();
+
+        doBigJob(id);
+
+        printf("First job done by %d\n", id);
+        //first finish one program
+        #pragma omp barrier
+
+        doBigJob(id);
+
+        printf("Second job done by %d\n", id);
+    }
+
+return 0;
+}
+--------------------
+First job done by 0
+First job done by 1
+First job done by 2
+First job done by 3
+Second job done by 0
+Second job done by 1
+Second job done by 2
+Second job done by 3
+=========================================
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int shared_variable = 0;
+
+    double start_time = omp_get_wtime(); // Start timing
+
+#pragma omp parallel num_threads(8)
+    {
+        for (int i = 0; i < 100000; i++) {
+            //critical region will access by only one process for once . exclusive read and exclusive write
+            #pragma omp critical
+            shared_variable++;
+        }
+    }
+
+    double end_time = omp_get_wtime(); // End timing
+
+    printf("Final value of shared_variable is %d.\n", shared_variable);
+    printf("Runtime: %f seconds\n", end_time - start_time); // Calculate and print runtime
+
+    return 0;
+}
+----------------------
+Final value of shared_variable is 800000.
+Runtime: 0.157777 seconds
+=====================================
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    long shared_variable = 0;
+
+    double start_time = omp_get_wtime(); // Start timing
+
+#pragma omp parallel num_threads(8)
+    {
+        long local_sum = 0;
+        for (int i = 0; i < 100000; i++) {
+            local_sum++;
+        }
+        #pragma omp critical
+        shared_variable += local_sum;
+    }
+
+    double end_time = omp_get_wtime(); // End timing
+
+    printf("Final value of shared_variable is %d.\n", shared_variable);
+    printf("Runtime: %f seconds\n", end_time - start_time); // Calculate and print runtime
+
+    return 0;
+}
+---------------------------
+Final value of shared_variable is 800000.
+Runtime: 0.000561 seconds
+=========================================
+#include <stdio.h>
+#include <omp.h>
+
+long N = 100000000;
+double dx;
+
+int main()
+{
+	int i;
+	double x, pi, sum = 0.0;
+	double start_time, run_time;
+
+	dx = 1.0 / (double)N;
+
+	start_time = omp_get_wtime();
+
+	for (i = 0; i < N; i++) {
+		x = (i + 0.5) * dx;
+		sum += 4.0 / (1.0 + x * x);
+	}
+
+	pi = sum * dx;
+
+	run_time = omp_get_wtime() - start_time;
+	printf("\n pi with %ld steps is %lf in %lf seconds\n ", N, pi, run_time);
+}
+-------------
+
+ pi with 100000000 steps is 3.141593 in 0.951560 seconds
+ =============================
+ 
