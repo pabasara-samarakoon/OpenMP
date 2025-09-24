@@ -189,7 +189,25 @@ int main() {
 -----------------> Result vector: 10 26 42 58
 ***********************************************************************************************************************************************************
 Given an array of real numbers, write a program that computes the mean and variance using OpenMP. Use two reductions (sum and sumSq): Mean and Variance
+#include <stdio.h>
+#include <omp.h>
 
+int main() {
+    int n = 6;
+    double a[6] = { 2.0, 4.0, 4.0, 4.0, 5.0, 5.0 };
+    double sum = 0.0, sumSq = 0.0, mean, variance;
+
+
+    //Compute sum = sum of (a[i])
+    //Compute sumSq = sum of (a[i] * a[i])
+    // 
+    //Compute mean = sum / n
+    //Compute variance = (sumSq / n) - (mean * mean)
+
+
+    printf("Mean = %.2f, Variance = %.2f\n", mean, variance);
+    return 0;
+}--------------------------------------
 #include <stdio.h>
 #include <omp.h>
 
@@ -219,4 +237,94 @@ int main() {
 }
 } -------------->Mean = 4.00, Variance = 1.00
 
+*********************************************************************************************
+estimating pi 
 
+#include <stdio.h>
+#include <omp.h>
+
+long N = 100000000;
+double dx;
+
+int main()
+{
+	int i;
+	double x, pi, sum = 0.0;
+	double start_time, run_time;
+
+	dx = 1.0 / (double)N;
+
+	start_time = omp_get_wtime();
+
+	for (i = 0; i < N; i++) {
+		x = (i + 0.5) * dx;
+		sum += 4.0 / (1.0 + x * x);
+	}
+
+	pi = sum * dx;
+
+	run_time = omp_get_wtime() - start_time;
+	printf("\n pi with %ld steps is %lf in %lf seconds\n ", N, pi, run_time);
+} ---------------------->  pi with 100000000 steps is 3.141593 in 0.953673 seconds
+
+---------------------------------------------------------------
+#include <stdio.h>
+#include <omp.h>
+
+long N = 100000000;
+double dx;
+
+int main()
+{
+	int i;
+	double x, pi, sum = 0.0;
+	double start_time, run_time;
+
+	dx = 1.0 / (double)N;
+
+	start_time = omp_get_wtime();
+
+#pragma omp parallel for reduction(+:sum)
+	for (i = 0; i < N; i++) {
+		x = (i + 0.5) * dx;
+		sum += 4.0 / (1.0 + x * x);
+	}
+
+	pi = sum * dx;
+
+	run_time = omp_get_wtime() - start_time;
+	printf("\n pi with %ld steps is %lf in %lf seconds\n ", N, pi, run_time);
+} ---------------------->  pi with 100000000 steps is 3.141778 in 0.395066 seconds
+============================
+#include <stdio.h>
+#include <omp.h>
+
+long N = 100000000;
+double dx;
+
+int main()
+{
+	int i;
+	double x, pi, sum = 0.0;
+	double start_time, run_time;
+
+	dx = 1.0 / (double)N;
+
+	start_time = omp_get_wtime();
+#pragma omp parallel
+	{
+	//#pragma omp parallel for reduction(+:sum) ---> not possible here
+		double x;
+		#pragma omp for reduction(+:sum)
+		for (i = 0; i < N; i++) {
+			x = (i + 0.5) * dx;
+			sum += 4.0 / (1.0 + x * x);
+		}
+	}
+	
+
+	pi = sum * dx;
+
+	run_time = omp_get_wtime() - start_time;
+	printf("\n pi with %ld steps is %lf in %lf seconds\n ", N, pi, run_time);
+} -----------> pi with 100000000 steps is 3.141593 in 0.090651 seconds
