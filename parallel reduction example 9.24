@@ -1,0 +1,222 @@
+
+Exercises - OpenMP Reduction
+Completion requirements
+Write separate OpenMP programs using #pragma omp parallel for reduction to solve the following problems:
+*******************************************************************************************************************************************************************
+Write a program that declares an integer array of size 10, initialises it with values, and uses OpenMP reduction (+) to compute the sum of all elements. 
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int n = 10;
+    int a[10] = { 1,2,3,4,5,6,7,8,9,10 };
+    int sum = 0;
+
+    //Compute the sum of all elements in the array
+
+    printf("Sum of array = %d\n", sum);
+    return 0;
+} ----->Sum of array = 0
+
+===================
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int n = 10;
+    int a[10] = { 1,2,3,4,5,6,7,8,9,10 };
+    int sum = 0;
+
+    //Compute the sum of all elements in the array
+#pragma omp parallel for reduction(+:sum)
+    for (int i = 0; i < n; i++)
+        sum += a[i];
+
+    printf("Sum of array = %d\n", sum);
+    return 0;
+}
+--------------> Sum of array = 55
+****************************************************************************************************************************************************************
+
+Given two integer vectors of size 5, compute their dot product using reduction.
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int n = 5;
+    int x[5] = { 1,2,3,4,5 };
+    int y[5] = { 10,20,30,40,50 };
+    int result = 0;
+
+    //Compute the dot product of two vectors
+
+    printf("Dot product = %d\n", result);
+    return 0;
+}----------->Dot product = 0
+
+================================================
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int n = 5;
+    int x[5] = { 1,2,3,4,5 };
+    int y[5] = { 10,20,30,40,50 };
+    int result = 0;
+
+    //Compute the dot product of two vectors
+#pragma omp parallel for
+    for (int i = 0; i < n; i++) {
+        result += x[i] * y[i];
+    }
+
+    printf("Dot product = %d\n", result);
+    return 0;
+} ---->Dot product = 550
+
+---------------------------------------
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int n = 5;
+    int x[5] = { 1,2,3,4,5 };
+    int y[5] = { 10,20,30,40,50 };
+    int result = 0;
+
+    //Compute the dot product of two vectors
+#pragma omp parallel for reduction(+:result)
+    for (int i = 0; i < n; i++) {
+        result += x[i] * y[i];
+    }
+
+    printf("Dot product = %d\n", result);
+    return 0;
+} ------------->Dot product = 550
+
+***************************************************************************************************************************************
+Write a program that finds the maximum value in an integer array using reduction(max:maxVal). Test with at least 8 numbers.
+----------------------------------
+#include <stdio.h>
+#include <omp.h>
+#include <limits.h>
+
+int main() {
+    int n = 8;
+    int a[8] = { 3, 7, 2, 9, 12, 5, 8, 4 };
+    int maxVal = INT_MIN;
+
+    //Find the maximum value
+
+    printf("Maximum value = %d\n", maxVal);
+    return 0;
+}--------------------->
+
+#include <stdio.h>
+#include <omp.h>
+#include <limits.h>
+
+int main() {
+    int n = 8;
+    int a[8] = { 3, 7, 2, 9, 12, 5, 8, 4 };
+    int maxVal = INT_MIN;
+
+    //Find the maximum value
+#pragma omp parallel for reduction(max:maxVal)
+    for (int i = 0; i < n; i++) {
+        if (maxVal < a[i])
+            maxVal = a[i];
+    }
+
+    printf("Maximum value = %d\n", maxVal);
+    return 0;
+} --------------> got errors
+*******************************************************************************************
+
+Given a 4×4 matrix and a vector of size 4, write a program that multiplies the matrix by the vector. Use nested loops and apply reduction in the inner loop to compute the dot product of each row.
+----------------------------------
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int n = 4;
+    int A[4][4] = {
+        {1, 2, 3, 4},
+        {5, 6, 7, 8},
+        {9, 10, 11, 12},
+        {13, 14, 15, 16}
+    };
+    int x[4] = { 1, 1, 1, 1 };
+    int y[4] = { 0 };
+
+    // Compute y[4] = A[4][4] . x[4]
+
+    printf("Result vector: ");
+    for (int i = 0; i < n; i++) printf("%d ", y[i]);
+    printf("\n");
+    return 0;
+}
+------------------------> Result vector: 0 0 0 0
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int n = 4;
+    int A[4][4] = {
+        {1, 2, 3, 4},
+        {5, 6, 7, 8},
+        {9, 10, 11, 12},
+        {13, 14, 15, 16}
+    };
+    int x[4] = { 1, 1, 1, 1 };
+    int y[4] = { 0 };
+
+    // Compute y[4] = A[4][4] . x[4]
+#pragma omp parallel for
+    for (int i = 0; i < n; i++) {
+        int sum = 0;
+        for (int j = 0; j < n; j++) {
+            sum += A[i][j] * x[j];
+        }
+        y[i] = sum;
+    }
+
+    printf("Result vector: ");
+    for (int i = 0; i < n; i++) printf("%d ", y[i]);
+    printf("\n");
+    return 0;
+}
+-----------------> Result vector: 10 26 42 58
+***********************************************************************************************************************************************************
+Given an array of real numbers, write a program that computes the mean and variance using OpenMP. Use two reductions (sum and sumSq): Mean and Variance
+
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    int n = 6;
+    double a[6] = { 2.0, 4.0, 4.0, 4.0, 5.0, 5.0 };
+    double sum = 0.0, sumSq = 0.0, mean, variance;
+
+
+    //Compute sum = sum of (a[i])
+    //Compute sumSq = sum of (a[i] * a[i])
+#pragma omp parallel for reduction(+:sum,sumSq)
+    for (int i = 0; i < n; i++) {
+        sum += a[i];
+        sumSq += a[i] * a[i];
+    }
+    mean = sum / n;
+    variance = (sumSq / n) - (mean * mean);
+ 
+    // 
+    //Compute mean = sum / n
+    //Compute variance = (sumSq / n) - (mean * mean)
+
+
+    printf(" Mean = %.2f, Variance = %.2f\n",mean, variance);
+    return 0;
+}
+} -------------->Mean = 4.00, Variance = 1.00
+
+
